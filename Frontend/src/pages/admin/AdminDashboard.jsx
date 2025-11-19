@@ -4,207 +4,122 @@ import API from "../../api/axios";
 export default function AdminDashboard() {
   const [summary, setSummary] = useState({});
   const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [users, setUsers] = useState([]);
   const [lowStock, setLowStock] = useState([]);
 
   const fetchData = async () => {
     try {
       const summaryRes = await API.get("/admin/summary");
       const ordersRes = await API.get("/admin/orders");
-      const productRes = await API.get("/products");
-      const usersRes = await API.get("/auth/all");
       const lowStockRes = await API.get("/admin/low-stock");
 
       setSummary(summaryRes.data);
       setOrders(ordersRes.data.orders);
-      setProducts(productRes.data.products);
-      setUsers(usersRes.data.users);
       setLowStock(lowStockRes.data.lowStock);
     } catch (err) {
       console.log(err);
-      alert("Error loading admin dashboard");
-    }
-  };
-
-  const updateOrderStatus = async (id, status) => {
-  try {
-    await API.put(`/admin/orders/${id}`, { status });
-    fetchData();
-  } catch (err) {
-    alert("Failed to update order status");
-  }
-};
-
-
-  const deleteProduct = async (id) => {
-    try {
-      await API.delete(`/products/${id}`);
-      fetchData();
-    } catch (err) {
-      alert("Error deleting product");
+      alert("Error loading dashboard");
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+  const load = async () => {
+    const res = await API.get(`/products/${id}`);
+    setProduct(res.data.product);
+  };
+  load();
+}, [id]);
 
   return (
-    <div className="p-6 space-y-12">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-semibold">Product Management</h1>
 
-      {/* ======================= SUMMARY CARDS ======================= */}
-      <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
+        <a
+          href="/admin/add-product"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          + Add Product
+        </a>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* =================== SUMMARY CARDS =================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Users", value: summary.totalUsers },
-          { title: "Orders", value: summary.totalOrders },
-          { title: "Products", value: summary.totalProducts },
-          { title: "Revenue", value: `₹${summary.totalRevenue}` },
+          { label: "Total Users", value: summary.totalUsers },
+          { label: "Total Orders", value: summary.totalOrders },
+          { label: "Total Products", value: summary.totalProducts },
+          { label: "Revenue", value: `₹${summary.totalRevenue}` },
         ].map((item, i) => (
           <div
             key={i}
-            className="bg-white shadow rounded p-5 text-center border hover:shadow-lg transition"
+            className="bg-white shadow-sm border border-gray-200 rounded-xl p-6 hover:shadow-md transition"
           >
-            <h2 className="text-gray-500">{item.title}</h2>
-            <p className="text-3xl font-bold mt-2">{item.value}</p>
+            <p className="text-gray-500 text-sm">{item.label}</p>
+            <h2 className="text-3xl font-bold mt-2">{item.value}</h2>
           </div>
         ))}
       </div>
 
-      {/* ======================= ORDERS SECTION ======================= */}
-      <div className="bg-white p-6 rounded shadow border">
-        <h2 className="text-2xl font-bold mb-4">Orders</h2>
+      {/* =================== RECENT ORDERS =================== */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <h2 className="text-2xl font-semibold mb-4">Recent Orders</h2>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="p-3">Order ID</th>
-                <th className="p-3">User</th>
-                <th className="p-3">Amount</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {orders.map((o) => (
-                <tr key={o._id} className="border-b">
-                  <td className="p-3">{o._id.slice(-6)}</td>
-                  <td className="p-3">{o.user?.name}</td>
-                  <td className="p-3 font-semibold">₹{o.totalAmount}</td>
-                  <td className="p-3">{o.status}</td>
-
-                  <td className="p-3">
-                    <select
-                      className="border px-2 py-1 rounded"
-                      value={o.status}
-                      onChange={(e) =>
-                        updateOrderStatus(o._id, e.target.value)
-                      }
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="processing">Processing</option>
-                      <option value="shipped">Shipped</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ======================= PRODUCTS SECTION ======================= */}
-      <div className="bg-white p-6 rounded shadow border">
-        <h2 className="text-2xl font-bold mb-4">Products</h2>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="p-3">Name</th>
-                <th className="p-3">Price</th>
-                <th className="p-3">Stock</th>
-                <th className="p-3">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {products.map((p) => (
-                <tr key={p._id} className="border-b">
-                  <td className="p-3">{p.name}</td>
-                  <td className="p-3">₹{p.price}</td>
-                  <td className="p-3">{p.stock}</td>
-                  <td className="p-3">
-                    <button
-                      className="bg-red-600 text-white px-3 py-1 rounded"
-                      onClick={() => deleteProduct(p._id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ======================= LOW STOCK SECTION ======================= */}
-      <div className="bg-white p-6 rounded shadow border">
-        <h2 className="text-2xl font-bold mb-4">Low Stock Alerts</h2>
-
-        <table className="w-full text-left border">
-          <thead className="bg-gray-100 border-b">
-            <tr>
-              <th className="p-3">Product</th>
-              <th className="p-3">Stock Left</th>
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-100 text-sm text-gray-700">
+              <th className="p-3">Order</th>
+              <th className="p-3">User</th>
+              <th className="p-3">Amount</th>
+              <th className="p-3">Status</th>
             </tr>
           </thead>
 
           <tbody>
-            {lowStock.map((p) => (
-              <tr key={p._id} className="border-b">
-                <td className="p-3">{p.name}</td>
-                <td className="p-3 text-red-600 font-bold">{p.stock}</td>
+            {orders.slice(0, 5).map((o) => (
+              <tr key={o._id} className="border-b">
+                <td className="p-3 font-mono text-sm">#{o._id.slice(-6)}</td>
+                <td className="p-3">{o.user?.name}</td>
+                <td className="p-3 font-semibold">₹{o.totalAmount}</td>
+
+                <td className="p-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      o.status === "delivered"
+                        ? "bg-green-100 text-green-700"
+                        : o.status === "cancelled"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {o.status}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* ======================= USERS SECTION ======================= */}
-      <div className="bg-white p-6 rounded shadow border">
-        <h2 className="text-2xl font-bold mb-4">Users</h2>
+      {/* =================== LOW STOCK =================== */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <h2 className="text-2xl font-semibold mb-4">Low Stock Products</h2>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="p-3">Name</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Role</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {users.map((u) => (
-                <tr key={u._id} className="border-b">
-                  <td className="p-3">{u.name}</td>
-                  <td className="p-3">{u.email}</td>
-                  <td className="p-3">{u.role}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {lowStock.length === 0 ? (
+          <p className="text-gray-600">All products are in good stock.</p>
+        ) : (
+          <div className="space-y-2">
+            {lowStock.map((p) => (
+              <div
+                key={p._id}
+                className="flex justify-between bg-gray-50 border rounded p-3"
+              >
+                <span>{p.name}</span>
+                <span className="text-red-600 font-semibold">{p.stock} left</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
     </div>
   );
 }

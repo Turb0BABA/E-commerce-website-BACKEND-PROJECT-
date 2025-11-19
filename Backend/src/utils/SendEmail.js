@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-
 export const sendInvoiceEmail = async (to, subject, html) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -8,11 +7,12 @@ export const sendInvoiceEmail = async (to, subject, html) => {
       pass: process.env.EMAIL_PASS
     }
   });
-
+  
   await transporter.sendMail({
     from: `"E-Commerce Store" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html
   });
+  console.log("EMAIL SENT TO:", to);
 };

@@ -3,20 +3,21 @@ import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
 export default function Checkout() {
-  const [items, setItems] = useState([]); // FIXED
+  const [items, setItems] = useState([]);
   const [address, setAddress] = useState("");
+  const [placing, setPlacing] = useState(false);
   const navigate = useNavigate();
 
   const loadCart = async () => {
     try {
       const res = await API.get("/cart");
-
-      // FIX: cart.items is the real array
-      const cartItems = res.data.cart?.items || [];
-
+      const cartItems =
+        res.data.cart?.items ||
+        res.data.items ||
+        [];
       setItems(cartItems);
     } catch (err) {
-      console.log("Checkout Load Error:", err);
+      console.log("Error loading cart:", err);
     }
   };
 
@@ -25,7 +26,7 @@ export default function Checkout() {
   }, []);
 
   if (items.length === 0) {
-    return <h1 className="text-xl">Your cart is empty</h1>;
+    return <h1 className="text-xl mt-6">Your cart is empty</h1>;
   }
 
   const total = items.reduce(
@@ -34,54 +35,74 @@ export default function Checkout() {
   );
 
   const placeOrder = async () => {
-    if (!address.trim()) return alert("Please enter your address");
+    if (!address.trim()) return alert("Please enter your delivery address");
 
     try {
+      setPlacing(true);
       const res = await API.post("/orders", { address });
 
-      if (res.status === 201) {
-        alert("Order placed successfully!");
-        navigate("/orders");
-      } else {
-        alert(res.data.message || "Order failed");
-      }
+      const order = res.data.order;
+      alert("Order placed successfully!");
+      navigate(`/orders/${order._id}`);
     } catch (err) {
-      console.log("Order Error:", err);
-      alert("Something went wrong while placing the order");
+      console.log(err);
+      alert("Error placing order");
+    } finally {
+      setPlacing(false);
     }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">Checkout</h1>
+    <div className="py-6 max-w-3xl mx-auto space-y-6">
+      <h1 className="text-3xl font-semibold">Checkout</h1>
 
-      <h2 className="text-xl mb-3 font-semibold">Order Summary</h2>
-
-      <div className="space-y-3 mb-4">
+      {/* Items */}
+      <div className="space-y-3">
         {items.map((item) => (
-          <div key={item.product._id} className="border rounded p-4">
-            <h3 className="text-lg font-semibold">{item.product.name}</h3>
-            <p>
-              ₹{item.product.price} × {item.quantity}
-            </p>
+          <div
+            key={item.product._id}
+            className="border border-gray-200 rounded-xl p-4 flex justify-between items-center bg-white"
+          >
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {item.product.name}
+              </h2>
+              <p className="text-sm text-gray-500">
+                ₹{item.product.price} × {item.quantity}
+              </p>
+            </div>
+
+            <img
+              src={`http://localhost:5000${item.product.image}`}
+              className="h-16 w-16 rounded-md object-cover bg-gray-50"
+            />
           </div>
         ))}
       </div>
 
-      <h2 className="text-2xl font-bold mb-4">Total: ₹{total}</h2>
+      {/* Total */}
+      <h2 className="text-2xl font-semibold">Total: ₹{total}</h2>
 
-      <textarea
-        className="w-full border p-3 rounded mb-4"
-        placeholder="Delivery Address..."
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-      ></textarea>
+      {/* Address */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">
+          Delivery address
+        </label>
+        <textarea
+          className="w-full border border-gray-300 rounded-md p-3 text-sm"
+          rows={3}
+          placeholder="Flat / House No, Street, City, Pincode"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        ></textarea>
+      </div>
 
       <button
+        className="bg-gray-900 text-white px-6 py-3 rounded-md w-full text-sm hover:bg-black disabled:opacity-60"
         onClick={placeOrder}
-        className="bg-green-600 text-white px-6 py-2 rounded"
+        disabled={placing}
       >
-        Place Order
+        {placing ? "Placing order..." : "Place Order"}
       </button>
     </div>
   );

@@ -10,10 +10,6 @@ export default function Cart() {
     try {
       const res = await API.get("/cart");
 
-      // Backend returns either:
-      // { cart: { items: [...] }, totalItems }
-      // OR
-      // { items: [], totalItems: 0 }
       const cartItems =
         res.data.cart?.items ||
         res.data.items ||
@@ -21,7 +17,6 @@ export default function Cart() {
 
       setItems(cartItems);
       setLoading(false);
-
     } catch (err) {
       console.log("Error loading cart:", err);
       setItems([]);
@@ -29,13 +24,10 @@ export default function Cart() {
     }
   };
 
-  const increaseQty = async (productId) => {
-    await API.put("/cart/update", { productId, quantity: +1 });
-    loadCart();
-  };
+  const updateQuantity = async (productId, newQty) => {
+    if (newQty < 1) return;
 
-  const decreaseQty = async (productId) => {
-    await API.put("/cart/update", { productId, quantity: -1 });
+    await API.put("/cart/update", { productId, quantity: newQty });
     loadCart();
   };
 
@@ -48,10 +40,10 @@ export default function Cart() {
     loadCart();
   }, []);
 
-  if (loading) return <h2>Loading cart...</h2>;
+  if (loading) return <h2 className="p-6">Loading cart...</h2>;
 
   if (items.length === 0)
-    return <h1 className="text-xl">Your cart is empty</h1>;
+    return <h1 className="text-xl p-6">Your cart is empty</h1>;
 
   const total = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
@@ -59,53 +51,80 @@ export default function Cart() {
   );
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">Your Cart</h1>
+    <div className="py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Cart items */}
+      <div className="lg:col-span-2 space-y-4">
+        <h1 className="text-3xl font-semibold mb-2">Your Cart</h1>
 
-      <div className="space-y-4">
         {items.map((item) => (
-          <div key={item.product._id} className="border p-4 rounded flex justify-between">
-            
+          <div
+            key={item.product._id}
+            className="border border-gray-200 rounded-xl p-4 flex justify-between items-center bg-white"
+          >
             <div>
-              <h2 className="text-xl">{item.product.name}</h2>
-              <p>₹{item.product.price} × {item.quantity}</p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {item.product.name}
+              </h2>
+              <p className="text-sm text-gray-500">
+                ₹{item.product.price} × {item.quantity}
+              </p>
             </div>
 
-            <div className="flex gap-3">
-              <button 
-                className="px-3 bg-gray-300 rounded"
-                onClick={() => decreaseQty(item.product._id)}
+            <div className="flex items-center gap-3">
+              <button
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                onClick={() =>
+                  updateQuantity(item.product._id, item.quantity - 1)
+                }
               >
-                -
+                −
               </button>
 
-              <button 
-                className="px-3 bg-green-600 text-white rounded"
-                onClick={() => increaseQty(item.product._id)}
+              <span className="text-sm">{item.quantity}</span>
+
+              <button
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                onClick={() =>
+                  updateQuantity(item.product._id, item.quantity + 1)
+                }
               >
                 +
               </button>
 
               <button
-                className="px-3 bg-red-600 text-white rounded"
+                className="px-3 py-1 rounded-md text-sm bg-red-600 text-white"
                 onClick={() => removeItem(item.product._id)}
               >
                 Remove
               </button>
             </div>
-
           </div>
         ))}
       </div>
 
-      <h2 className="text-2xl font-bold mt-6">Total: ₹{total}</h2>
+      {/* Summary */}
+      <div className="border border-gray-200 rounded-xl p-5 bg-white h-fit">
+        <h2 className="text-xl font-semibold mb-3">Summary</h2>
+        <p className="flex justify-between text-sm text-gray-700 mb-2">
+          <span>Subtotal</span>
+          <span>₹{total}</span>
+        </p>
+        <p className="flex justify-between text-sm text-gray-500 mb-4">
+          <span>Delivery</span>
+          <span>₹0</span>
+        </p>
+        <p className="flex justify-between text-lg font-semibold text-gray-900">
+          <span>Total</span>
+          <span>₹{total}</span>
+        </p>
 
-      <Link
-        to="/checkout"
-        className="inline-block mt-4 bg-blue-600 text-white px-5 py-2 rounded"
-      >
-        Proceed to Checkout
-      </Link>
+        <Link
+          to="/checkout"
+          className="mt-5 block text-center bg-gray-900 text-white py-2.5 rounded-md text-sm hover:bg-black"
+        >
+          Proceed to Checkout
+        </Link>
+      </div>
     </div>
   );
 }

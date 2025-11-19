@@ -21,7 +21,10 @@ export default function EditProduct() {
     e.preventDefault();
 
     const fd = new FormData();
-    Object.keys(product).forEach((key) => fd.append(key, product[key]));
+    Object.keys(product).forEach((key) => {
+    if (key !== "_id") fd.append(key, product[key]);
+      });
+
     if (image) fd.append("image", image);
 
     try {

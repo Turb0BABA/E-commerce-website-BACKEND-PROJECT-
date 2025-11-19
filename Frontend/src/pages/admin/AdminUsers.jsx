@@ -5,13 +5,12 @@ export default function AdminUsers() {
   const [users, setUsers] = useState([]);
 
   const loadUsers = async () => {
-    const res = await API.get("/admin/users");
-    setUsers(res.data);
-  };
-
-  const toggleStatus = async (id) => {
-    await API.put(`/admin/users/${id}/toggle`);
-    loadUsers();
+    try {
+      const res = await API.get("/auth/all");
+      setUsers(res.data.users);
+    } catch (err) {
+      alert("Failed to load users");
+    }
   };
 
   useEffect(() => {
@@ -19,41 +18,30 @@ export default function AdminUsers() {
   }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Manage Users</h1>
+    <div className="py-8">
+      <h1 className="text-3xl font-semibold mb-6">Users</h1>
 
-      <table className="w-full">
-        <thead>
-          <tr className="border-b text-left">
-            <th className="p-2">Name</th>
-            <th className="p-2">Email</th>
-            <th className="p-2">Role</th>
-            <th className="p-2">Status</th>
-            <th className="p-2">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {users.map((u) => (
-            <tr key={u._id} className="border-b">
-              <td className="p-2">{u.name}</td>
-              <td className="p-2">{u.email}</td>
-              <td className="p-2">{u.role}</td>
-              <td className="p-2">
-                {u.active ? "Active" : "Inactive"}
-              </td>
-              <td className="p-2">
-                <button
-                  className="text-blue-500"
-                  onClick={() => toggleStatus(u._id)}
-                >
-                  Toggle Status
-                </button>
-              </td>
+      <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-100 text-gray-700">
+              <th className="p-3">Name</th>
+              <th className="p-3">Email</th>
+              <th className="p-3">Role</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {users.map((u) => (
+              <tr key={u._id} className="border-b">
+                <td className="p-3">{u.name}</td>
+                <td className="p-3">{u.email}</td>
+                <td className="p-3 font-medium">{u.role}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
