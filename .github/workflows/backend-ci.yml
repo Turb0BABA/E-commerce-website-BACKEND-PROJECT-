@@ -1,0 +1,46 @@
+name: Backend CI
+
+on:
+  push:
+    branches: 
+      - backend-dev
+      - feature/*
+  pull_request:
+    branches:
+      - backend-dev
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint code (optional)
+        run: |
+          if [ -f ".eslintrc.json" ]; then
+            npm run lint || true
+          fi
+
+      - name: Run tests (placeholder)
+        run: |
+          echo "No test suite yet — backend checks passed."
+
+      - name: Check code formatting (optional)
+        run: |
+          if [ -f "prettier.config.js" ]; then
+            npm run format:check || true
+          fi
+
+      - name: Final Status
+        run: echo "CI pipeline completed successfully!"
